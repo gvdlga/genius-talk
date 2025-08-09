@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { Agent } from 'packages/shared/src';
+import { Agent } from '@packages/shared/src';
 
 const AgentSchema: Schema = new Schema({
   agentId: { type: String, unique: true },
