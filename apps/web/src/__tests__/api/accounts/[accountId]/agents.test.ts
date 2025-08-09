@@ -1,17 +1,16 @@
 import { createMocks } from 'node-mocks-http';
-import handler from '@/pages/api/accounts/[accountId]/agents';
+import agentsApi from '@/pages/api/accounts/[accountId]/agents';
 import dbConnect from '@/lib/dbConnect';
 import Agent from '@/lib/models/Agent';
 import bcryptjs from 'bcryptjs';
-import { auth } from '@/lib/auth';
+
 import { validateToken } from 'better-auth';
+import { auth } from '@/lib/auth';
 
 jest.mock('@/lib/dbConnect');
 jest.mock('@/lib/models/Agent');
 jest.mock('bcryptjs');
-jest.mock('@/lib/auth', () => ({
-  auth: jest.fn((handler) => handler),
-}));
+
 jest.mock('better-auth');
 
 describe('/api/accounts/[accountId]/agents', () => {
@@ -20,7 +19,7 @@ describe('/api/accounts/[accountId]/agents', () => {
       method: 'GET',
     });
 
-    await handler(req, res);
+    await agentsApi(req, res);
 
     expect(res._getStatusCode()).toBe(405);
   });
@@ -31,7 +30,7 @@ describe('/api/accounts/[accountId]/agents', () => {
       body: { name: 'test' },
     });
 
-    await handler(req, res);
+    await agentsApi(req, res);
 
     expect(res._getStatusCode()).toBe(400);
   });
@@ -43,9 +42,9 @@ describe('/api/accounts/[accountId]/agents', () => {
       body: { name: 'test-agent', betterAuthToken: 'invalid-token' },
     });
 
-    (validateToken as jest.Mock).mockResolvedValue(false);
+    (auth.validateToken as jest.Mock).mockResolvedValue(false);
 
-    await handler(req, res);
+    await agentsApi(req, res);
 
     expect(res._getStatusCode()).toBe(401);
   });
@@ -57,11 +56,11 @@ describe('/api/accounts/[accountId]/agents', () => {
       body: { name: 'test-agent', betterAuthToken: 'test-token' },
     });
 
-    (validateToken as jest.Mock).mockResolvedValue(true);
+    (auth.validateToken as jest.Mock).mockResolvedValue(true);
     (bcryptjs.hash as jest.Mock).mockResolvedValue('hashed-token');
     (Agent.create as jest.Mock).mockResolvedValue({ agentId: 'new-agent-id' });
 
-    await handler(req, res);
+    await agentsApi(req, res);
 
     expect(res._getStatusCode()).toBe(201);
     expect(res._getJSONData()).toHaveProperty('agentId', 'new-agent-id');
