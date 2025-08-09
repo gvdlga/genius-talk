@@ -12,7 +12,7 @@
 | **Database** | MongoDB | 5.0+ | Primary data storage | Specified in PRD. A flexible NoSQL database that works well with JavaScript-based applications. |
 | **Cache** | Redis | 7.0+ | Caching and real-time messaging | Specified in PRD. Used for caching frequently accessed data and as a pub/sub broker for WebSockets. |
 | **File Storage** | N/A | N/A | Storing user-uploaded files | Out of scope for MVP. Future implementation would use a service like AWS S3 or MinIO for on-premise. |
-| **Authentication** | BetterAuth | latest | User and Agent Authentication | Specified in PRD. Integrated directly into the Next.js application. |
+| **Authentication** | BetterAuth | latest | Centralized User and Agent Authentication | External service providing robust authentication flows and token validation. Integrated via server-side library.
 | **Frontend Testing** | Jest & React Testing Library | latest | Unit and component testing | Industry standard for testing React applications, ensuring component correctness. |
 | **Backend Testing** | Jest & Supertest | latest | API endpoint testing | Allows for testing API routes without needing a running server, ideal for CI environments. |
 | **E2E Testing** | Playwright | latest | End-to-end browser testing | A modern, reliable E2E testing framework that supports all major browsers. |

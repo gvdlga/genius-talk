@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import Agent from '@/lib/models/Agent';
 import dbConnect from '@/lib/dbConnect';
-import { validateToken } from '@better-auth/server-side-library';
+import { validateToken } from 'better-auth';
 import bcryptjs from 'bcryptjs';
 
 export function auth(handler: (req: NextApiRequest, res: NextApiResponse) => void) {
@@ -22,16 +22,24 @@ export function auth(handler: (req: NextApiRequest, res: NextApiResponse) => voi
     } catch (error) {
       // If user token validation fails, try to find an agent
       try {
-        const isValidAgentToken = await validateToken(token);
-        if (isValidAgentToken) {
-          await dbConnect();
-          const betterAuthTokenHash = await bcryptjs.hash(token, 10);
-          const agent = await Agent.findOne({ betterAuthTokenHash });
+        // Validate the token with BetterAuth first
+        await validateToken(token); // If this throws, it's not a valid BetterAuth token at all
 
-          if (agent) {
-            (req as any).agent = agent;
-            return handler(req, res);
+        await dbConnect();
+        // Find an agent by iterating and comparing the token with the stored hash
+        const agents = await Agent.find({}); // Fetch all agents (or a subset if performance is an issue, but for now, assume few agents)
+        let foundAgent = null;
+        for (const agent of agents) {
+          const isMatch = await bcryptjs.compare(token, agent.betterAuthTokenHash);
+          if (isMatch) {
+            foundAgent = agent;
+            break;
           }
+        }
+
+        if (foundAgent) {
+          (req as any).agent = foundAgent;
+          return handler(req, res);
         }
       } catch (agentError) {
         // Suppress agent auth errors and fall through to the final unauthorized error

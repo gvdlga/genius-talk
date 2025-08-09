@@ -4,7 +4,7 @@ import dbConnect from '@/lib/dbConnect';
 import Agent from '@/lib/models/Agent';
 import bcryptjs from 'bcryptjs';
 import { auth } from '@/lib/auth';
-import { validateToken } from '@better-auth/server-side-library';
+import { validateToken } from 'better-auth';
 
 jest.mock('@/lib/dbConnect');
 jest.mock('@/lib/models/Agent');
@@ -12,7 +12,7 @@ jest.mock('bcryptjs');
 jest.mock('@/lib/auth', () => ({
   auth: jest.fn((handler) => handler),
 }));
-jest.mock('@better-auth/server-side-library');
+jest.mock('better-auth');
 
 describe('/api/accounts/[accountId]/agents', () => {
   it('should return 405 if method is not POST', async () => {

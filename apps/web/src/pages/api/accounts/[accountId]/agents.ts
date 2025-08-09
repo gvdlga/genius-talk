@@ -4,7 +4,7 @@ import bcryptjs from 'bcryptjs';
 import dbConnect from '@/lib/dbConnect';
 import Agent from '@/lib/models/Agent';
 import { auth } from '@/lib/auth';
-import { validateToken } from '@better-auth/server-side-library';
+import { validateToken } from 'better-auth';
 
 const agentSchema = z.object({
   name: z.string(),

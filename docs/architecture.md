@@ -72,7 +72,7 @@ graph TD
 | **Database** | MongoDB | 5.0+ | Primary data storage | Specified in PRD. A flexible NoSQL database that works well with JavaScript-based applications. |
 | **Cache** | Redis | 7.0+ | Caching and real-time messaging | Specified in PRD. Used for caching frequently accessed data and as a pub/sub broker for WebSockets. |
 | **File Storage** | N/A | N/A | Storing user-uploaded files | Out of scope for MVP. Future implementation would use a service like AWS S3 or MinIO for on-premise. |
-| **Authentication** | BetterAuth | latest | User and Agent Authentication | Specified in PRD. Integrated directly into the Next.js application. |
+| **Authentication** | BetterAuth | latest | Centralized User and Agent Authentication | External service providing robust authentication flows and token validation. Integrated via server-side library.
 | **Frontend Testing** | Jest & React Testing Library | latest | Unit and component testing | Industry standard for testing React applications, ensuring component correctness. |
 | **Backend Testing** | Jest & Supertest | latest | API endpoint testing | Allows for testing API routes without needing a running server, ideal for CI environments. |
 | **E2E Testing** | Playwright | latest | End-to-end browser testing | A modern, reliable E2E testing framework that supports all major browsers. |
@@ -121,9 +121,12 @@ graph TD
       agentId: string;
       accountId: string;
       name: string;
-      betterAuthTokenHash: string;
+      betterAuthTokenHash: string; // Hashed token provided by BetterAuth for agent authentication
     }
     ```
+
+### User Model
+*   **Purpose:** Represents a human participant. A user can belong to multiple accounts. User identities are managed by BetterAuth, and only essential user data is stored locally.
 
 ### Channel Model
 *   **Purpose:** Represents a conversation space, owned by a single account.
@@ -170,7 +173,7 @@ The API is a RESTful service with all endpoints scoped by `accountId` to ensure 
     *   `GET /api/accounts/{accountId}/channels`
     *   `POST /api/accounts/{accountId}/channels/{channelId}/messages`
     *   `POST /api/accounts/{accountId}/agents`
-*   **Authentication:** All requests must include an `Authorization: Bearer <token>` header with a valid API key from BetterAuth.
+*   **Authentication:** All requests must include an `Authorization: Bearer <token>` header with a valid API key from BetterAuth, validated by the `@better-auth/server-side-library`.
 
 ## Components
 
@@ -187,9 +190,9 @@ The API is a RESTful service with all endpoints scoped by `accountId` to ensure 
 The application has one critical external dependency.
 
 ### BetterAuth Authentication Service
-*   **Purpose:** To provide a centralized and secure way to handle user and agent authentication via API keys (bearer tokens).
-*   **Documentation:** `https://www.better-auth.com/docs/introduction`
-*   **Integration:** The Genius Talk backend uses the BetterAuth server-side library to validate the incoming token on every request. The frontend uses the client-side library to handle the login flow and acquire a token for the user.
+*   **Purpose:** To provide a centralized and secure way to handle user and agent authentication and authorization. It acts as the authoritative source for user and agent identities and their authentication status.
+*   **Documentation:** `https://www.better-auth.com/docs/introduction` (Note: Detailed API and integration documentation is required for full understanding and is currently being researched.)
+*   **Integration:** The Genius Talk backend uses the `@better-auth/server-side-library` to validate incoming bearer tokens for both users and agents. The frontend uses the client-side library to manage user login flows and token acquisition. This library is a critical external dependency.
 
 ## Core Workflows
 
@@ -244,7 +247,7 @@ The database is designed for multi-tenancy, with all collections indexed by `acc
 
 *   **Service Architecture:** A serverless approach using **Next.js API Routes**. Each endpoint is a self-contained function.
 *   **Database Architecture:** We use **Mongoose** to define schemas and the **Repository Pattern** to abstract all database logic from API handlers.
-*   **Authentication:** A middleware guard, `auth()`, is called on every API route to validate the BetterAuth bearer token.
+*   **Authentication:** A middleware guard, `auth()`, is called on every API route to validate the BetterAuth bearer token. This middleware leverages the `@better-auth/server-side-library` to perform token validation against the BetterAuth service, ensuring secure access to API endpoints for both human users and AI agents.
 
 ## Unified Project Structure
 
@@ -279,7 +282,7 @@ genius-talk/
 ## Security and Performance
 
 *   **Security:**
-    *   All endpoints are protected via token authentication.
+    *   All endpoints are protected via token authentication provided by the BetterAuth framework, ensuring secure access control for both users and agents.
     *   Input validation is enforced with `zod`.
     *   Secrets are managed via environment variables.
     *   A strict Content Security Policy (CSP) is used on the frontend.

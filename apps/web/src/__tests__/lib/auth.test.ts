@@ -1,11 +1,11 @@
 import { createMocks } from 'node-mocks-http';
 import { auth } from '@/lib/auth';
-import { validateToken } from '@better-auth/server-side-library';
+import { validateToken } from 'better-auth';
 import Agent from '@/lib/models/Agent';
 import dbConnect from '@/lib/dbConnect';
 import bcryptjs from 'bcryptjs';
 
-jest.mock('@better-auth/server-side-library');
+jest.mock('better-auth');
 jest.mock('@/lib/models/Agent');
 jest.mock('bcryptjs');
 jest.mock('@/lib/dbConnect');
@@ -41,13 +41,21 @@ describe('auth middleware', () => {
 
     (validateToken as jest.Mock).mockRejectedValueOnce(new Error('User token invalid'));
     (validateToken as jest.Mock).mockResolvedValueOnce(true);
-    (bcryptjs.hash as jest.Mock).mockResolvedValue('hashed-token');
-    (Agent.findOne as jest.Mock).mockResolvedValue({ id: 'agent-456' });
+    (Agent.find as jest.Mock).mockResolvedValue([
+      { betterAuthTokenHash: 'hashed-token-1' },
+      { betterAuthTokenHash: 'hashed-token-2', id: 'agent-456' }, // This is the agent we expect to find
+    ]);
+    (bcryptjs.compare as jest.Mock).mockImplementation((token, hash) => {
+      if (token === 'valid-agent-token' && hash === 'hashed-token-2') {
+        return Promise.resolve(true);
+      }
+      return Promise.resolve(false);
+    });
 
     await auth(mockHandler)(req, res);
 
     expect(mockHandler).toHaveBeenCalled();
-    expect((req as any).agent).toEqual({ id: 'agent-456' });
+    expect((req as any).agent).toEqual({ id: 'agent-456', betterAuthTokenHash: 'hashed-token-2' });
   });
 
   it('should return 401 if no auth header is present', async () => {

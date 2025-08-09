@@ -35,9 +35,12 @@
       agentId: string;
       accountId: string;
       name: string;
-      betterAuthTokenHash: string;
+      betterAuthTokenHash: string; // Hashed token provided by BetterAuth for agent authentication
     }
     ```
+
+## User Model
+*   **Purpose:** Represents a human participant. A user can belong to multiple accounts. User identities are managed by BetterAuth, and only essential user data is stored locally.
 
 ## Channel Model
 *   **Purpose:** Represents a conversation space, owned by a single account.
